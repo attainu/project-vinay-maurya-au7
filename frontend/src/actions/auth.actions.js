@@ -1,97 +1,173 @@
-import {authConstants  } from "./constants";
-import axios from "../helpers/axios";
-//import axios from 'axios';
+import {
+  AUTH_FORM_SUCCESS,
+  AUTH_FORM_FAIL,
+  AUTH_ERROR,
+  USER_IS_LOADED,
+  LOG_OUT,
+  CHECK_PASSWORDS,
+  CHANGE_PASSWORD,
+  CHANGE_PASSWORD_FAIL,
+  CHANGE_PROFILE,
+  CHANGE_USER_DATA_FAILED,
+} from "../constants/auth.constants";
+import axios from "axios";
+import setAuthenticationToken from "../middleware/setAuthenticationToken";
 
+export const userLoaded = () => async (dispatch) => {
+  if (localStorage.getItem("token")) {
+    setAuthenticationToken(localStorage.getItem("token"));
+  }
+  try {
+    const res = await axios.get("http://localhost:5000/api/users");
+    dispatch({
+      type: USER_IS_LOADED,
+      payload: res.data,
+    });
+  } catch (error) {
+    console.log(error.message);
+    dispatch({
+      type: AUTH_ERROR,
+    });
+  }
+};
 
-export const login = (user) =>{
+export const registerUser = (userData) => async (dispatch) => {
+  try {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
 
-    console.log('consoling users', user)
+    const body = JSON.stringify(userData);
 
-    return  async(dispatch) => {
+    const response = await axios.post(
+      "http://localhost:5000/api/users/register",
+      body,
+      config
+    );
 
-        dispatch({ type:authConstants.LOGIN_REQUEST});
-        try{
-            const res =  await axios.post(`/admin/signin`,{
-            ...user
-            })
-            if(res.status ===200){
-                const {token, user} = res.data;
-                localStorage.setItem('token', token);
-                localStorage.setItem('user',JSON.stringify(user) );
-                dispatch({
-                    type: authConstants.LOGIN_SUCCESS,
-                    payload: {
-                        token, user
-                    }
-                });
-            } else{
-                if(res.status=== 400){
-                    dispatch({
-                        type:authConstants.LOGIN_FAILURE,
-                        payload:{ error: res.data.error}
-                    });
-                }
-            }
-        } catch(error){
-            console.log('this is founded error', error.message);
-        }        
-     } 
-}
+    dispatch({
+      type: AUTH_FORM_SUCCESS,
+      payload: response.data,
+    });
+    dispatch(userLoaded());
+  } catch (error) {
+    dispatch({
+      type: AUTH_FORM_FAIL,
+      payload: error,
+    });
+  }
+};
 
-export const isUserLoggedIn = () =>{
-    return async dispatch =>{
-        const token = localStorage.getItem('token');
-        if(token){
-            const  user  =JSON.parse(localStorage.getItem('user')) 
-            dispatch({
-                type:authConstants.LOGIN_SUCCESS,
-                payload:{
-                    token, user
-                }
-            });
-        } else{
-            dispatch({
-                type:authConstants.LOGIN_FAILURE,
-                payload:{ error:'Failed to login'  }
-            })
-        }
-    }
-}
+export const loginUser = (userData) => async (dispatch) => {
+  try {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
 
+    const body = JSON.stringify(userData);
 
-export const signout = () =>{
-    return async dispatch =>{
+    const response = await axios.post(
+      "http://localhost:5000/api/users/login",
+      body,
+      config
+    );
 
-        dispatch({ type : authConstants.LOGOUT_REQUEST });
-        
-        const res = await axios.post(`/admin/signout`);
-        
-        if(res.status === 200){
-            localStorage.clear();
-            dispatch({ type: authConstants.LOGOUT_SUCCESS })                
-        } else{
-            dispatch({
-                type: authConstants.LOGOUT_FAILURE,
-                payload : { error : res.data.error }
-            });
-        }
-    }
-}
+    dispatch({
+      type: AUTH_FORM_SUCCESS,
+      payload: response.data,
+    });
+    dispatch(userLoaded());
+  } catch (error) {
+    dispatch({
+      type: AUTH_FORM_FAIL,
+      payload: error,
+    });
+  }
+};
 
+export const checkPasswords = (passwordToCheck) => async (dispatch) => {
+  try {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+    const body = JSON.stringify({ passwordToCheck });
+    const res = await axios.put(
+      "http://localhost:5000/api/users/check_acutal_password",
+      body,
+      config
+    );
+    dispatch({
+      type: CHECK_PASSWORDS,
+      payload: res.data,
+    });
+  } catch (error) {
+    dispatch({
+      type: CHANGE_PASSWORD_FAIL,
+      payload: error,
+    });
+  }
+};
 
+export const changePassword = (newPassword) => async (dispatch) => {
+  try {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+    const body = JSON.stringify({ newPassword });
+    const res = await axios.put(
+      "http://localhost:5000/api/users/change_user_password",
+      body,
+      config
+    );
+    dispatch({
+      type: CHANGE_PASSWORD,
+      payload: res.data,
+    });
+    dispatch(userLoaded());
+  } catch (error) {
+    dispatch({
+      type: CHANGE_PASSWORD_FAIL,
+      payload: error,
+    });
+  }
+};
 
+export const changeUserData = (changeUserData, userDataToChange) => async (
+  dispatch
+) => {
+  try {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+    const body = JSON.stringify({ changeUserData });
+    const response = await axios.put(
+      `http://localhost:5000/api/users/change_user_data/${userDataToChange}`,
+      body,
+      config
+    );
+    dispatch({
+      type: CHANGE_PROFILE,
+      payload: response.data,
+    });
+    alert("Data has changed");
+  } catch (error) {
+    dispatch({
+      type: CHANGE_USER_DATA_FAILED,
+      payload: error,
+    });
+  }
+};
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+export const logOut = () => (dispatch) => {
+  dispatch({ type: LOG_OUT });
+};
