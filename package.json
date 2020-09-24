@@ -1,5 +1,5 @@
 {
-  "name": "mernstacksocialnetwork",
+  "name": "onlinehawker",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,7 +8,7 @@
     "forever": "forever -w server.js",
     "client": "cd frontend && npm start"
   },
-  "author": "vampire-au7",
+  "author": "vinay maurya",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
